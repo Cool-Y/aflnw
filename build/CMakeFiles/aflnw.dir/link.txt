@@ -1,0 +1,1 @@
+/home/han/ck/iot/upnpfuzz/afl/afl-2.52b/afl-clang-fast   -rdynamic CMakeFiles/aflnw.dir/src/main.c.o CMakeFiles/aflnw.dir/src/utils.c.o  -o aflnw 

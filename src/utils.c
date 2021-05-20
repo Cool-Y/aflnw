@@ -22,11 +22,11 @@ void parseArgs(int argc, char *argv[])
     conf = (struct config *)malloc(sizeof(struct config));
     bzero(conf, sizeof(struct config));
     if (argc == 1) {
-        printf("Usage: %s -p <port> -a <addr>\n", argv[0]);
+        printf("Usage: %s -p <port> -a <addr> -m <tcp/udp>\n", argv[0]);
         exit(1);
     }
     char ch;
-    while ((ch = getopt(argc, argv, "p:a:o:e:t:d")) != -1)
+    while ((ch = getopt(argc, argv, "p:a:o:e:t:m:b:d")) != -1)
     {
         switch (ch)
         {
@@ -42,25 +42,28 @@ void parseArgs(int argc, char *argv[])
         case 'e':
             conf->stderr = strdup(optarg);
             break;
-        case 't':
-            conf->utime = atoi(optarg);
-            break;
         case 'd':
             conf->debug = 1;
+            break;
+        case 'm':
+            conf->model = strdup(optarg);
+            break;
+        case 'b':
+            conf->bind = strdup(optarg);
             break;
         default:
             break;
         }
     }
-    conf->path = strdup(argv[optind]);
-    conf->proc = strrchr(conf->path, '/');
-    conf->proc++;
+    //conf->path = strdup(argv[optind]);
+    //conf->proc = strrchr(conf->path, '/');
+    //conf->proc++;
 }
 
 void freeArgs()
 {
     free(conf->addr);
-    free(conf->path);
+    //free(conf->path);
     free(conf->stdout);
     free(conf->stderr);
     free(conf);
@@ -111,6 +114,7 @@ void tcpSend(char *addr, int port)
                   server_fd, (const struct sockaddr *)&server_listen_addr,
                   sizeof(struct sockaddr)
               );
+    printf("send ret %d\n", ret);
     if (ret < 0)
     {
         crash();
@@ -129,6 +133,73 @@ void tcpSend(char *addr, int port)
     buf = NULL;
 }
 
+void checkalive(char *addr, int port)
+{
+    int server_fd;
+    char *buf;
+    struct sockaddr_in server_listen_addr;
+    bzero(&server_listen_addr, sizeof(server_listen_addr));
+    server_listen_addr.sin_family = AF_INET;
+    server_listen_addr.sin_port = htons(port);
+    inet_pton(AF_INET, addr, (void*)&server_listen_addr.sin_addr);
+    server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    int ret = connect(
+                  server_fd, (const struct sockaddr *)&server_listen_addr,
+                  sizeof(struct sockaddr)
+              );
+    printf("send ret %d\n", ret);
+    if (ret < 0)
+    {
+        crash();
+    }
+    close(server_fd);
+    free(buf);
+    buf = NULL;
+}
+
+void udpSend(char *addr, int port)
+{
+    int client_fd;
+    char *buf;
+    struct sockaddr_in ser_addr, cli_addr;
+
+    client_fd = socket(AF_INET, SOCK_DGRAM, 0);
+    printf("send ret %d\n", client_fd);
+    if(client_fd < 0)
+    {
+        printf("create socket fail!\n");
+        crash();
+    }
+
+    cli_addr.sin_family = AF_INET;
+    cli_addr.sin_port = htons(9693);
+    cli_addr.sin_addr.s_addr = inet_addr(bind_addr);
+    int ret = bind(client_fd, (struct sockaddr* )&cli_addr, sizeof(struct sockaddr_in));
+    if (ret < 0)
+    {
+        perror("bind");
+        exit(EXIT_FAILURE);
+    }
+
+    memset(&ser_addr, 0, sizeof(ser_addr));
+    ser_addr.sin_family = AF_INET;
+    ser_addr.sin_addr.s_addr = inet_addr(addr);
+    ser_addr.sin_port = htons(port);
+    buf = (char*)malloc(4096);
+    while (fread(buf, 1, sizeof(buf), stdin)) {
+        sendto(client_fd, buf, strlen(buf), 0, (struct sockaddr *)&ser_addr, sizeof(struct sockaddr));
+        checkalive(monitor_ip,monitor_port);
+        if (conf->debug) {
+            printf("client:%s\n",buf);
+            recvfrom(client_fd, buf, strlen(buf), 0, NULL, NULL);
+            printf("recv bytes %s\n", buf);
+        }
+    }
+    close(client_fd);
+    free(buf);
+    buf = NULL;
+}
+
 void run(char *path, int argc, char *argv[], int optbind)
 {
     int child = fork();
@@ -141,7 +212,7 @@ void run(char *path, int argc, char *argv[], int optbind)
     }
 
     if (child == 0) {
-        // printf("argc %d optind %d\n", argc, optind);
+        printf("argc %d optind %d\n", argc, optind);
         int count;
         int fd;
         pid_t sid = 0;
@@ -149,7 +220,7 @@ void run(char *path, int argc, char *argv[], int optbind)
         count = 0;
         while (optind + count < argc) {
             chargs[count] = argv[optind + count];
-            // printf("chargs %d %s\n", count, chargs[count]);
+            printf("chargs %d %s\n", count, chargs[count]);
             count++;
         }
         chargs[count] = NULL;
@@ -218,6 +289,8 @@ void run(char *path, int argc, char *argv[], int optbind)
 
 void crash()
 {
+    perror("crash");
     void (*x)();
     x();
+    exit(0);
 }

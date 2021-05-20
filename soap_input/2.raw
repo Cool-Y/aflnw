@@ -1,0 +1,12 @@
+POST /ctl/IPConn HTTP/1.1
+Connection: keep-alive
+Accept-Encoding: gzip, deflate
+Accept: */*
+User-Agent: python-requests/2.20.1
+SOAPAction: "urn:schemas-upnp-org:service:WANIPConnection:1#AddPortMapping"
+Host: 192.168.2.2:5000
+Content-Type: text/xml
+Content-Length: 644
+
+<?xml version='1.0' encoding='utf-8'?>
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"><SOAP-ENV:Body><m:AddPortMapping xmlns:m="urn:schemas-upnp-org:service:WANIPConnection:1"><NewRemoteHost></NewRemoteHost><NewExternalPort>8080</NewExternalPort><NewProtocol>UDP</NewProtocol><NewInternalPort>80</NewInternalPort><NewInternalClient>192.168.2.20</NewInternalClient><NewEnabled>1</NewEnabled><NewPortMappingDescription>deadbeef</NewPortMappingDescription><NewLeaseDuration>0</NewLeaseDuration></m:AddPortMapping></SOAP-ENV:Body></SOAP-ENV:Envelope>

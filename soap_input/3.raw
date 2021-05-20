@@ -1,0 +1,12 @@
+POST /ctl/IPConn HTTP/1.1
+Connection: keep-alive
+Accept-Encoding: gzip, deflate
+Accept: */*
+User-Agent: python-requests/2.20.1
+SOAPAction: "urn:schemas-upnp-org:service:WANIPConnection:1#DeletePortMapping"
+Host: 192.168.2.2:5000
+Content-Type: text/xml
+Content-Length: 435
+
+<?xml version='1.0' encoding='utf-8'?>
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"><SOAP-ENV:Body><m:DeletePortMapping xmlns:m="urn:schemas-upnp-org:service:WANIPConnection:1"><NewRemoteHost></NewRemoteHost><NewExternalPort>8080</NewExternalPort><NewProtocol>UDP</NewProtocol></m:DeletePortMapping></SOAP-ENV:Body></SOAP-ENV:Envelope>
